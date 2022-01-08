@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+        body{
+    background-image: url('https://i.ibb.co/tXmzDM7/a4e2bfc7-5c4c-4563-849f-148e0b7cf5b8.jpg');
+    background-size: cover;
+    height: 100vh;
+    padding:0;
+    margin:0;
+}
+table, th, td {border-collapse: collapse;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif }
+div {width: 40%;height: 45%;padding:2%;background-color: rgb(159, 199, 223) }
+table {margin: 0px auto;font-size: 22px; }
+th, td { padding: 20px;background-color: rgb(87, 180, 192); 
+}
+    </style>
+<head>    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>20-701-801 Ramazan Ayyıldız
+    </title>
+</head>
+<body>
+    <main>
+        <div>
+            <h1 style="color:rgb(148, 3, 3) ;text-align:center;font-size:240%">Telefon Veritabanı</h1
+           
+
+        <br><br>
+        <input  style="float:left;border: 5px solid rgb(255, 255, 255);width: 70%;font-size:25px;text-align:center;;background-color:rgb(197, 197, 197);" type="text" id="telefonmarka-input" placeholder="Eklenecek telefon modelini ">
+    
+        <button style="font-size: 27px;float:right;font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;background-color:rgb(6, 158, 160); border: 5px solid rgb(3, 96, 121);color:rgb(255, 255, 255)" class="button" id="add-telefonmarka-btn">Ekle</button>
+        <br><br><br><br><br><br>
+        
+        <input style="float:left;border: 5px solid rgb(255, 255, 255);width: 70%;font-size:25px;text-align:center;;background-color:rgb(197, 197, 197);" type="text" placeholder="Aranacak telefon" id="search-input">
+      
+        <button style="font-size: 27px;float:right;font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;background-color:rgb(6, 158, 160); border: 5px solid rgb(3, 96, 121);color:rgb(255, 255, 255)" class="button" id="search-btn">Ara</button>     
+        <br><br><br><br>   
+
+        <table  id="telefon kayıtları">
+            <thead style="color: rgb(255, 255, 255) " >
+                <th>sıra</th>
+                <th>Telefon Markası</th>
+                <th>Zaman</th>
+                <th>sil</th>
+                <th>Değiştir</th>
+            </thead>
+            <tbody></tbody>
+        </table> 
+        <section hidden id="update-row">
+            <input  style="margin-left: 12%;border: 5px solid rgb(255, 255, 255);width: 70%;font-size:25px;text-align:center;;background-color:rgb(6, 158, 160);"type="text" placeholder="Yeni Araç" id="update-telefonmarka-input">
+            <button style="font-size: 27px;margin-left: 10px;font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;background-color:rgb(6, 158, 160); border: 5px solid rgb(65, 65, 65);color:rgb(223, 212, 180)" class="button" id="update-row-btn">Güncelle</button>
+        </section>
+    </div>
+
+       
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+    fetch('http://localhost:5000/getAll')
+    .then(response => response.json())
+    .then(data => loadHTMLTable(data['data']));
+    
+});
+
+document.querySelector('table tbody').addEventListener('click', function(event) {
+    if (event.target.className === "delete-row-btn") {
+        deleteRowById(event.target.dataset.id);
+    }
+    if (event.target.className === "edit-row-btn") {
+        handleEditRow(event.target.dataset.id);
+    }
+});
+
+const updateBtn = document.querySelector('#update-row-btn');
+const searchBtn = document.querySelector('#search-btn');
+
+searchBtn.onclick = function() {
+    const searchValue = document.querySelector('#search-input').value;
+
+    fetch('http://localhost:5000/search/' + searchValue)
+    .then(response => response.json())
+    .then(data => loadHTMLTable(data['data']));
+}
+
+function deleteRowById(id) {
+    fetch('http://localhost:5000/delete/' + id, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function handleEditRow(id) {
+    const updateSection = document.querySelector('#update-row');
+    updateSection.hidden = false;
+    document.querySelector('#update-telefonmarka-input').dataset.id = id;
+}
+
+updateBtn.onclick = function() {
+    const updateNameInput = document.querySelector('#update-telefonmarka-input');
+
+
+    console.log(updateNameInput);
+
+    fetch('http://localhost:5000/update', {
+        method: 'PATCH',
+        headers: {
+            'Content-type' : 'application/json'
+        },
+        body: JSON.stringify({
+            id: updateNameInput.dataset.id,
+            telefonmarka: updateNameInput.value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+}
+
+
+const addBtn = document.querySelector('#add-telefonmarka-btn');
+
+addBtn.onclick = function () {
+    const nameInput = document.querySelector('#telefonmarka-input');
+    const telefonmarka = nameInput.value;
+    nameInput.value = "";
+
+    fetch('http://localhost:5000/insert', {
+        headers: {
+            'Content-type': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify({ telefonmarka : telefonmarka})
+    })
+    .then(response => response.json())
+    .then(data => insertRowIntoTable(data['data']));
+}
+
+function insertRowIntoTable(data) {
+    console.log(data);
+    const table = document.querySelector('table tbody');
+    const isTableData = table.querySelector('.no-data');
+
+    let tableHtml = "<tr>";
+
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            if (key === 'dateadd') {
+                data[key] = new Date(data[key]).toLocaleString();
+            }
+            tableHtml += `<td>${data[key]}</td>`;
+        }
+    }
+
+    tableHtml += `<td><button class="delete-row-btn" data-id=${data.id}>Sil</td>`;
+    tableHtml += `<td><button class="edit-row-btn" data-id=${data.id}>Düzenle</td>`;
+
+    tableHtml += "</tr>";
+
+    if (isTableData) {
+        table.innerHTML = tableHtml;
+    } else {
+        const newRow = table.insertRow();
+        newRow.innerHTML = tableHtml;
+    }
+}
+
+function loadHTMLTable(data) {
+    const table = document.querySelector('table tbody');
+
+    if (data.length === 0) {
+        table.innerHTML = "<tr><td class='no-data' colspan='5'>Veri Yok</td></tr>";
+        return;
+    }
+
+    let tableHtml = "";
+
+    data.forEach(function ({id, telefonmarka, dateadd}) {
+        tableHtml += "<tr>";
+        tableHtml += `<td>${id}</td>`;
+        tableHtml += `<td>${telefonmarka}</td>`;
+        tableHtml += `<td>${new Date(dateadd).toLocaleString()}</td>`;
+        tableHtml += `<td><button class="delete-row-btn" data-id=${id}>Sil</td>`;
+        tableHtml += `<td><button class="edit-row-btn" data-id=${id}>Düzenle</td>`;
+        tableHtml += "</tr>";
+    });
+
+    table.innerHTML = tableHtml;
+}
+
+    </script>
+</body>
+</html>
